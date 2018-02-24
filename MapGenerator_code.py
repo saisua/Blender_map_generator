@@ -7,12 +7,18 @@ print("")
 ###
 #Convertir Object_latice y Lattice en listas de los mismos, y
 #en deform_lattice, determinar segun su posicion global, su
-#posicion en una matriz de objetos. (Tambien hacer que los
+#posicion en una matriz de objetos (Tambien hacer que los
 #lattice tengan el mismo tamaño, y la separación entre ellos
-#sea de 1/2 su tamaño)
+#sea de 1/2 su tamaño).  Una vez generada, y determinado que 
+#el mapa tenga la cantidad de tierra necesaria, modificar el 
+#lattice, no antes.
 # a)ir de izquierda a derecha como si fueran una misma matriz
 # b)calcular una matriz y dar la lista de alturas necesaria para
 #   calcular las adyacentes.
+
+#a. Lattice_Vert_matrix es una lista de matrices(lattices) de listas,
+#   aunque el programa utiliza una altura(x) para determinar la anterior,
+#   aun a traves de listas.
 
 def deform_lattice(min_height, max_height, add_height, oLattice, Lattice, min_land, max_land):
     Lattice_Vert_matrix = []
@@ -53,6 +59,7 @@ def deform_lattice(min_height, max_height, add_height, oLattice, Lattice, min_la
         point_x = oLattice.data.points[apoints].co_deform[0]
         point_y = oLattice.data.points[apoints].co_deform[1]
         #print("new point["+str(apoints)+"] position = ("+str(point_x)+","+str(point_y)+","+str(height)+")")
+        #The next line modifies the lattice even when may be too much or not enough land
         oLattice.data.points[apoints].co_deform = (point_x,point_y,height)
         Lattice_Vert_x_matrix.append(height)
         if contador >= Lattice_Vert_x - 1:
