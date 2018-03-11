@@ -29,20 +29,12 @@ print("")
 
 ###
 
-#Convertir Object_latice y Lattice en listas de los mismos, y
-#en deform_lattice, determinar segun su posicion global, su
-#posicion en una matriz de objetos (Tambien hacer que los
-#lattice tengan el mismo tamaño, y la separación entre ellos
-#sea = a su tamaño).  Una vez generada, y determinado que 
-#el mapa tenga la cantidad de tierra necesaria, modificar el 
-#lattice, no antes.
-# a)ir de izquierda a derecha como si fueran una misma matriz
-# b)calcular una matriz y dar la lista de alturas necesaria para
-#   calcular las adyacentes.
+#Falta:
 
-#a. Lattice_Vert_matrix es una lista de matrices(lattices) de listas,
-#   aunque el programa utiliza una altura(x) para determinar la anterior,
-#   aun a traves de listas.
+#-Probabilidades de que suba, se quede y baje
+#-Mover y rotar lattices automaticamente
+#-Crear lattices
+#-Habilitar mapas no cuadrados
 
 def deform_lattice(min_height, max_height, add_height, variation_height, oLattice, Lattice, min_land, max_land):
     Lattice_Vert_matrix = []
