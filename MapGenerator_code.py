@@ -13,7 +13,10 @@ points_x = Lattice[0].points_u
 points_y = Lattice[0].points_v
 for lat in range(num_lat_side*num_lat_side):
     try:
-        lat = str(float(lat)/1000)
+        lat = float(lat)/1000
+        while lat > 1:
+            lat = lat / 10
+        lat = str(lat)
         exec("Object_lattice.append(bpy.data.objects['Lattice"+str(lat[1:])+"'])")
         exec("Lattice.append(bpy.data.lattices['Lattice"+str(lat[1:])+"'])")
         exec("bpy.data.lattices['Lattice"+str(lat[1:])+"'].points_u = points_x")
@@ -41,7 +44,7 @@ print("")
 #   aunque el programa utiliza una altura(x) para determinar la anterior,
 #   aun a traves de listas.
 
-def deform_lattice(min_height, max_height, add_height, oLattice, Lattice, min_land, max_land):
+def deform_lattice(min_height, max_height, add_height, variation_height, oLattice, Lattice, min_land, max_land):
     Lattice_Vert_matrix = []
     for lattices in Lattice:
         Lattice_Vert_matrix.append([])
@@ -61,42 +64,33 @@ def deform_lattice(min_height, max_height, add_height, oLattice, Lattice, min_la
     for apoints in range((Lattice_Vert_x*Lattice_Vert_y)*len(Lattice_Vert_matrix)):
         contador += 1
         contador_x += 1
+        print("")
         print("latt,cont_y,cont_x,cont")
         print(str(latt),str(contador_y),str(contador_x), str(contador))
-        ###
-        # El siguiente if no funciona como deberia 
-        # Deberia afectar a todos los puntos que estan entre dos o mas matrices
-        # Osea, dejar pasar si:
-        # -contador < numero de puntos(x)
-        # -contador_x = numero de puntos(x) * numero de lattices(x)
-        # ???-contador_y != (numero de puntos(y) * int(numero de lattices(y)*(cont_latt - 1)) + 1  
-        # ???-contador_y != (numero de puntos(y) * int(numero de lattices(y)/(cont_latt - 1)) + 1  
-        ##
-        
         print("0:"+str(contador_y%Lattice_Vert_y))
-        if  (contador_x == 0 or contador != 0) or (0 == (contador_y%Lattice_Vert_y) and contador_y == 0):
-        #if (contador_y-((latt-int(contador_x/Lattice_Vert_x)x)*Lattice_Vert_y) != 0) or (len(Lattice_Vert_x_matrix) != 0 and contador == 0):
-        #if (len(Lattice_Vert_x_matrix) != 0 and contador == 0) or (contador_y-(latt-int(contador_x/Lattice_Vert_x)*Lattice_Vert_y) != 0):
-            if (contador_y-(latt-int(contador_x/Lattice_Vert_x))*Lattice_Vert_y) > 0:
-                if (height > Lattice_Vert_matrix[latt][(contador_y-(latt-int(contador_x/Lattice_Vert_x))*Lattice_Vert_y)-1][contador] + add_height or height < Lattice_Vert_matrix[latt][(contador_y-(latt-int(contador_x/Lattice_Vert_x))*Lattice_Vert_y)-1][contador] - add_height):
-                    #print("too much height [" + str(Lattice_Vert_matrix[len(Lattice_Vert_matrix)-1][contador]) + "], y")
-                    height = Lattice_Vert_matrix[latt][(contador_y-(latt-int(contador_x/Lattice_Vert_x))*Lattice_Vert_y)-1][contador]
-                    #print("new height: " +str(height)) 
-            if len(Lattice_Vert_x_matrix) > 0 and contador > 0:
-                if (height > float(Lattice_Vert_x_matrix[contador-1] + add_height) or height < float(Lattice_Vert_x_matrix[contador-1] - add_height)): 
-                    #print("too much height [" + str(height) + "], x")
-                    height = Lattice_Vert_x_matrix[contador-1]
-                    #print("new height: " +str(height)) 
-            if (contador_y-(latt-int(contador_x/Lattice_Vert_x))*Lattice_Vert_y) > 0 and len(Lattice_Vert_x_matrix) > 0:
-                if (height > Lattice_Vert_matrix[latt][(contador_y-(latt-int(contador_x/Lattice_Vert_x))*Lattice_Vert_y)-1][contador] + add_height or height < Lattice_Vert_matrix[latt][(contador_y-(latt-int(contador_x/Lattice_Vert_x))*Lattice_Vert_y)-1][contador] + add_height) or (height > Lattice_Vert_x_matrix[contador-1] + add_height  or height < Lattice_Vert_x_matrix[contador-1] - add_height):
-                    #print("too much height [" + str(height) + ", "+ str(Lattice_Vert_matrix[len(Lattice_Vert_matrix)-1][contador]) +"], xy")
-                    height = (Lattice_Vert_matrix[latt][(contador_y-(latt-int(contador_x/Lattice_Vert_x))*Lattice_Vert_y)-1][contador]+Lattice_Vert_x_matrix[contador-1])/2
-                    #print("new height: " +str(height)) 
+        if ((contador_x == 0 or contador != 0) and 0 != (contador_y%Lattice_Vert_y)) or contador_y == 0:
+            if contador_y > 0:     
+                if contador_y - (int(latt_y/math.sqrt(len(Lattice_Vert_matrix)))*Lattice_Vert_y) > 0 and len(Lattice_Vert_x_matrix) > 0:
+                    if (height > Lattice_Vert_matrix[latt][contador_y - (int(latt_y/math.sqrt(len(Lattice_Vert_matrix)))*Lattice_Vert_y)-1][contador] + add_height*variation_height or height < Lattice_Vert_matrix[latt][contador_y - (int(latt_y/math.sqrt(len(Lattice_Vert_matrix)))*Lattice_Vert_y)-1][contador] - add_height*variation_height) or (height > Lattice_Vert_x_matrix[contador-1] + add_height*variation_height  or height < Lattice_Vert_x_matrix[contador-1] - add_height*variation_height):
+                        print("too much height [" + str(height) + "], xy")
+                        height = (Lattice_Vert_matrix[latt][contador_y - (int(latt_y/math.sqrt(len(Lattice_Vert_matrix)))*Lattice_Vert_y)-1][contador]+Lattice_Vert_x_matrix[contador-1])/2
+                else:
+                    if contador_y - (int(latt_y/math.sqrt(len(Lattice_Vert_matrix)))*Lattice_Vert_y) > 0:
+                        print(str(contador_y - (int(latt_y/math.sqrt(len(Lattice_Vert_matrix)))*Lattice_Vert_y)-1))
+                        if (height > Lattice_Vert_matrix[latt][contador_y - (int(latt_y/math.sqrt(len(Lattice_Vert_matrix)))*Lattice_Vert_y)-1][contador] + add_height*variation_height or height < Lattice_Vert_matrix[latt][contador_y - (int(latt_y/math.sqrt(len(Lattice_Vert_matrix)))*Lattice_Vert_y)-1][contador] - add_height*variation_height):
+                            print("too much height [" + str(height) + "], y")
+                            height = Lattice_Vert_matrix[latt][contador_y - (int(latt_y/math.sqrt(len(Lattice_Vert_matrix)))*Lattice_Vert_y)-1][contador]
+                            print("new height: " +str(height)) 
+                    if len(Lattice_Vert_x_matrix) > 0 and contador > 0:
+                        if (height > float(Lattice_Vert_x_matrix[contador-1] + add_height*variation_height) or height < float(Lattice_Vert_x_matrix[contador-1] - add_height*variation_height)): 
+                            print("too much height [" + str(height) + "], x")
+                            height = Lattice_Vert_x_matrix[contador-1]
+                            print("new height: " +str(height)) 
+                            print("new height: " +str(height)) 
             height = height + float(random.randint(-1,1)*add_height)
         else:
             print("---EXCEPCION---")
             if contador_x != 0 and len(Lattice_Vert_x_matrix) == 0:
-                height = Lattice_Vert_matrix[latt-1][contador_y%Lattice_Vert_y][Lattice_Vert_x-1]
                 if contador_y != 0 and 0 == (contador_y%Lattice_Vert_y):
                     t2 = Lattice_Vert_matrix[latt-1][contador_y%Lattice_Vert_y][Lattice_Vert_x-1]
                     #print("latt-int:" + str(latt-int(math.sqrt(len(Lattice_Vert_matrix)))-1))
@@ -109,11 +103,13 @@ def deform_lattice(min_height, max_height, add_height, oLattice, Lattice, min_la
                     #print("b:" + str(b))
                     c = b / 3
                     #print("c:" + str(c))
-                    
+                    print("---INTERSECCION---")
                     height = float(c)
                     Lattice_Vert_matrix[latt-1][contador_y%Lattice_Vert_y][Lattice_Vert_x-1] = height
                     Lattice_Vert_matrix[latt-int(math.sqrt(len(Lattice_Vert_matrix)))][Lattice_Vert_y-1][contador] = height
                     Lattice_Vert_matrix[latt-int(math.sqrt(len(Lattice_Vert_matrix)))-1][Lattice_Vert_y-1][Lattice_Vert_x-1] = height
+                else:
+                    height = Lattice_Vert_matrix[latt-1][contador_y%Lattice_Vert_y][Lattice_Vert_x-1]
             else:
                 #print("lattice:" + str(latt-int(math.sqrt(len(Lattice_Vert_matrix)))))
                 #print("fila:" + str(Lattice_Vert_y))
@@ -132,6 +128,8 @@ def deform_lattice(min_height, max_height, add_height, oLattice, Lattice, min_la
             Lattice_Vert_x_matrix = []
             latt += 1
             contador = -1
+            print("")
+            print("---")
             print("")
             print("--Final de matriz(x)")
             if contador_x >= Lattice_Vert_x*math.sqrt(len(Lattice_Vert_matrix))-1:
@@ -167,10 +165,10 @@ def deform_lattice(min_height, max_height, add_height, oLattice, Lattice, min_la
                 print("")
                 print("lattice " + str(each_lattice))
                 for height_row in range(len(Lattice_Vert_matrix[each_lattice])):
-                    print(Lattice_Vert_matrix[each_lattice][height_row])
+                    #print(Lattice_Vert_matrix[each_lattice][height_row])
                     for each_height in range(len(Lattice_Vert_matrix[each_lattice][height_row])):
-                        print("point[" + str((height_row)*(len(Lattice_Vert_matrix[each_lattice][0])) +each_height) + "]")
-                        print("modify point["+str(each_height)+ "," + str(height_row)+"] height = " + str(Lattice_Vert_matrix[each_lattice][height_row][each_height]))
+                        #print("point[" + str((height_row)*(len(Lattice_Vert_matrix[each_lattice][0])) +each_height) + "]")
+                        #print("modify point["+str(each_height)+ "," + str(height_row)+"] height = " + str(Lattice_Vert_matrix[each_lattice][height_row][each_height]))
                         point_x = oLattice[each_lattice].data.points[(height_row)*(len(Lattice_Vert_matrix[each_lattice][0]))+each_height].co_deform[0]
                         point_y = oLattice[each_lattice].data.points[(height_row)*(len(Lattice_Vert_matrix[each_lattice][0]))+each_height].co_deform[1]
                         oLattice[each_lattice].data.points[(height_row)*(len(Lattice_Vert_matrix[each_lattice][0]))+each_height].co_deform = (point_x,point_y,Lattice_Vert_matrix[each_lattice][height_row][each_height])
@@ -181,12 +179,12 @@ def reset_lattice(obLattice,Lattice):
         for apoints in range((each_lattice.points_u*each_lattice.points_v)):
             for oLattice in obLattice:
                 oLattice.data.points[apoints].co_deform = (oLattice.data.points[apoints].co[0],oLattice.data.points[apoints].co[1],0)
-        print("Lattice/s reseted")
+        print("Lattice reseted")
  
 def create_map():
     global Object_lattice,Lattice   
-    deform_lattice(-.035*2,.035*10,.005*3,Object_lattice,Lattice,0,100)
-    #min_height, max_height, add_height, object_lattice, lattice, min_land, max_land
+    deform_lattice(-.035,.035,.005,2,Object_lattice,Lattice,35,75)
+    #min_height, max_height, add_height, variation_height, object_lattice, lattice, min_land, max_land
 
-reset_lattice(Object_lattice,Lattice)
+#reset_lattice(Object_lattice,Lattice)
 create_map()
