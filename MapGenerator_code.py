@@ -81,7 +81,7 @@ def deform_lattice(map_width, map_height, min_height, max_height, add_height, va
             exec("bpy.data.lattices['Lattice"+str(lat[1:])+"'].points_u = points_x")
             exec("bpy.data.lattices['Lattice"+str(lat[1:])+"'].points_v = points_y")
             #print("Lattice moved to (" + str((-(lati%map_width)*oLattice[len(oLattice)-1].scale[0])) + "," + str(((int(lati/map_width))*oLattice[len(oLattice)-1].scale[1])) + ", 0)")
-            oLattice[len(oLattice)-1].location = ((-(lati%map_width)*oLattice[len(oLattice)-1].scale[0]),((int(lati/map_width))*oLattice[len(oLattice)-1].scale[1]),0)
+            oLattice[len(oLattice)-1].location = (((lati%map_width)*oLattice[len(oLattice)-1].scale[0]),((int(lati/map_width))*oLattice[len(oLattice)-1].scale[1]),0)
             Lattice_Vert_matrix.append([])
         except:
             #print("Lattice"+str(lat[1:])+" doesn't exist")
@@ -107,7 +107,7 @@ def deform_lattice(map_width, map_height, min_height, max_height, add_height, va
             obj_lattice.scale = (72,72,72)
             obj.scale = (0.5,0.5,0.5)
             obj.parent = obj_lattice
-            oLattice[len(oLattice)-1].location = ((-(lati%map_width)*oLattice[len(oLattice)-1].scale[0]),((int(lati/map_width))*oLattice[len(oLattice)-1].scale[1]),0)
+            oLattice[len(oLattice)-1].location = (((lati%map_width)*oLattice[len(oLattice)-1].scale[0]),((int(lati/map_width))*oLattice[len(oLattice)-1].scale[1]),0)
             scn = bpy.context.scene
             scn.objects.link(obj_lattice)
             scn.objects.link(obj)
@@ -134,7 +134,6 @@ def deform_lattice(map_width, map_height, min_height, max_height, add_height, va
     else:
         map_size = map_height * map_height
     
-    
     print("map_size:" + str(map_size))
     print("Lattice_Vert_matrix:" + str(Lattice_Vert_matrix))
     print("Lattice:" + str(Lattice))
@@ -143,19 +142,26 @@ def deform_lattice(map_width, map_height, min_height, max_height, add_height, va
     for numpoints in range((Lattice_Vert_x*Lattice_Vert_y)*(map_size)):
         #print("")
         #print("numpoints:" + str(numpoints))
-
+        
+        if numpoints >= (Lattice_Vert_x*Lattice_Vert_y)*(map_width*map_height):
+            print("Breaking because of the lack of lattices...")
+            break
+        
         contador += 1
         contador_x += 1
         print("latt,cont_y,cont_x,cont")
         print(str(latt),str(contador_y),str(contador_x), str(contador))
         
         #print(str((Lattice_Vert_x*Lattice_Vert_y)*map_width*map_height))
-        if numpoints >= (Lattice_Vert_x*Lattice_Vert_y)*(map_width*map_height):
-            print("Breaking because of the lack of lattices...")
-            break
+        
         #print("0:"+str(contador_y%Lattice_Vert_y))
         if ((contador_x == 0 or contador != 0) and 0 != (contador_y%Lattice_Vert_y)) or contador_y == 0:
-            if contador_y > 0:     
+            prob = random.randint(1,(down_prob+stay_prob+up_prob))
+            if prob > stay_prob-1:
+                added = float(random.randint(-down_prob,up_prob))
+                if added != 0:
+                    height = height + (added/abs(added))*add_height
+            if contador_y > 0:      
                 if contador_y - (int(latt_y/math.sqrt(map_size))*Lattice_Vert_y) > 0 and len(Lattice_Vert_x_matrix) > 0:
                     if (height > Lattice_Vert_matrix[latt][contador_y - (int(latt_y/math.sqrt(map_size))*Lattice_Vert_y)-1][contador] + add_height*variation_height or height < Lattice_Vert_matrix[latt][contador_y - (int(latt_y/math.sqrt(map_size))*Lattice_Vert_y)-1][contador] - add_height*variation_height) or (height > Lattice_Vert_x_matrix[contador-1] + add_height*variation_height  or height < Lattice_Vert_x_matrix[contador-1] - add_height*variation_height):
                         print("too much height [" + str(height) + "], xy")
@@ -171,12 +177,9 @@ def deform_lattice(map_width, map_height, min_height, max_height, add_height, va
                         if (height > float(Lattice_Vert_x_matrix[contador-1] + add_height*variation_height) or height < float(Lattice_Vert_x_matrix[contador-1] - add_height*variation_height)): 
                             print("too much height [" + str(height) + "], x")
                             height = Lattice_Vert_x_matrix[contador-1]
+                            Lattice_Vert_x_matrix[contador-1] = height
                             #print("new height: " +str(height)) 
-            prob = random.randint(1,(down_prob+stay_prob+up_prob))
-            if prob > stay_prob-1:
-                added = float(random.randint(-down_prob,up_prob))
-                if added != 0:
-                    height = height + (added/abs(added))*add_height
+            
             else:
                 if contador > 0 and contador_y > 0:
                     height = (Lattice_Vert_matrix[latt][contador_y - (int(latt_y/math.sqrt(map_size))*Lattice_Vert_y)-1][contador]+Lattice_Vert_x_matrix[contador-1])/2
@@ -202,7 +205,6 @@ def deform_lattice(map_width, map_height, min_height, max_height, add_height, va
                 print("lattice:" + str(latt-int(math.sqrt(len(Lattice_Vert_matrix)))))
                 print("fila:" + str(Lattice_Vert_y))
                 print("numero:" + str(contador))
-                print("height teoric:" + str(Lattice_Vert_matrix[latt-int(math.sqrt(map_size))][Lattice_Vert_y-1][contador]))
                 height = Lattice_Vert_matrix[latt-int(math.sqrt(map_size))][Lattice_Vert_y-1][contador]
         if height < min_height:
             height = min_height
@@ -275,7 +277,7 @@ def reset_lattice(obLattice,Lattice):
  
 def create_map():
     global Object_lattice,Lattice   
-    deform_lattice(5,3,-.035*10,.035*10,.005*5,2,Object_lattice,Lattice,0,100,1,3,1,11,11)
+    deform_lattice(5,3,-.035,.035,.005,5,Object_lattice,Lattice,35,75,1,2,1,32,32)
     #width, height, min_height, max_height, add_height, variation_height, object_lattice, lattice, min_land, max_land, down_prob, stay_prob, up_prob, resolution_x, resolution_y
     #default: (1,1,-.035,.035,.005,2,Object_lattice,Lattice,35,75,1,3,1,32,32)
     
