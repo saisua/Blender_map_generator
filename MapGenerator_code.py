@@ -4,16 +4,6 @@ import math
 import time
 import mathutils
 
-def remove_everything():
-    for a in bpy.data.objects:
-        bpy.data.objects.remove(a,True)
-    for a in bpy.data.lattices:
-        bpy.data.lattices.remove(a)
-    for a in bpy.data.meshes:
-        bpy.data.meshes.remove(a)
-
-remove_everything()
-
 try:
     Object_lattice = [bpy.data.objects['Lattice']]
     Lattice = [bpy.data.lattices['Lattice']]
