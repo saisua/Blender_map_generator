@@ -14,88 +14,93 @@ These are all functions and their arguments explained:
 
 This is the most important function in the script and it does generate a random map, with the following arguments given:
 
-<dt> Map_width </dt>
-<dd> It's the number of lattices in the x axis. This argument is needed since lattices can only be up to (64x,64y,64z) points. </dd>
-<dd> Map_width goes from 0 to infinite. </dd>
+##Map_width
+It's the number of lattices in the x axis. This argument is needed since lattices can only be up to (64x,64y,64z) points.
+Map_width goes from 0 to infinite.
 
-<dt> Map_height </dt>
-<dd> Same as Map_width, but the number of lattices in the <b>y</b> axis. If Map_height > Map_width, Map_height does apply to the x axis. </dd>
-<dd> Map_height goes from 0 to infinite. </dd>
+##Map_height 
+Same as Map_width, but the number of lattices in the <b>y</b> axis. If Map_height > Map_width, Map_height does apply to the x axis. 
+Map_height goes from 0 to infinite.
   
-<dt> Min_height </dt>
-<dd> This argument gives the function the lower height possible. </dd>
-<dd> Min_height goes from -infinite to infinite, but it should to be less than Max_height. </dd>
+Min_height
+  This argument gives the function the lower height possible.
+  Min_height goes from -infinite to infinite, but it should to be less than Max_height.
   
-<dt> Max_height </dt>
-<dd> This argument gives the function the maximum height value possible. </dd>
-<dd> Max_height goes from -infinite to infinite, but it should to be greater than Min_height. </dd>
+##Max_height
+This argument gives the function the maximum height value possible.
+Max_height goes from -infinite to infinite, but it should to be greater than Min_height.
   
-<dt> Add_height </dt>
-<dd> This argument gives the function how much height variation goes from one point(x) to the next one. </dd>
-<dd> Add_height goes from 0 to infinite. Values lower than 0 may cause the program not to work properly. </dd>
+##Add_height 
+This argument gives the function how much height variation goes from one point(x) to the next one. 
+Add_height goes from 0 to infinite. Values lower than 0 may cause the program not to work properly.
 
-<dt> Variation_height  </dt>
-<dd> This argument does limit the height between one point(y) to the next one. </dd>
-<dd> Add_height goes from 1 to infinite. Values lower than 1 may cause the program not to work properly. </dd>
+##Variation_height
+This argument does limit the height between one point(y) to the next one.
+Add_height goes from 1 to infinite. Values lower than 1 may cause the program not to work properly. 
 
-<dt> oLattice </dt>
-<dd> This argument should not be modified, since it is a <b>List</b> of the lattices' object data. </dd>
-<dd> Don't modify this unless you know what you are doing. </dd>
+##oLattice 
+This argument should not be modified, since it is a <b>List</b> of the lattices' object data.
+Don't modify this unless you know what you are doing.
 
 
-<dt> Lattice </dt>
-<dd> Again, this argument should not be modified, as it is a <b>List</b> of the lattices' lattice data. </dd>
-<dd> Don't modify this unless you know what you are doing. </dd>
+##Lattice 
+Again, this argument should not be modified, as it is a <b>List</b> of the lattices' lattice data. 
+Don't modify this unless you know what you are doing.
 
 
 ###
-<dt> Min_land </dt>
-<dd> This variable is the minimum percentage of land (points > 0 * 100 / total of points) to call the map as valid. </dd>
-<dd> Min_land goes from 0 to 100. It must be greater than Max_land, or blender will freeze. </dd>
+##Min_land 
+This variable is the minimum percentage of land (points > 0 * 100 / total of points) to call the map as valid.
+Min_land goes from 0 to 100. It must be greater than Max_land, or blender will freeze.
 
 
-<dt> Max_land </dt>
-<dd> This variable is the maximum percentage of land (points > 0 * 100 / total of points) to call the map as valid. </dd>
-<dd> Max_land goes from 0 to 100. It must be greater than Min_land. Otherwise, blender will freeze. </dd>
+##Max_land
+This variable is the maximum percentage of land (points > 0 * 100 / total of points) to call the map as valid.
+Max_land goes from 0 to 100. It must be greater than Min_land. Otherwise, blender will freeze.
 
 <b> If Max_land - Min_land is a very low value (<35) it may take a long time to create the map. </b>
 ###
 
-<dt> Down_prob </dt>
-<dd> Down_prob is the probability that height(x) will be greater than the next height. </dd>
-<dd> Down_prob goes from 0 to infinite. Values lower than 0 may cause the program not to work properly. </dd>
+##Down_prob
+Down_prob is the probability that height(x) will be greater than the next height. 
+Down_prob goes from 0 to infinite. Values lower than 0 may cause the program not to work properly.
 
 
-<dt> Stay_prob </dt>
-<dd> Stay_prob is the probability that height(x) will be the same as the next height. </dd>
-<dd><b> Stay_prob does modify height(x,y), height(x-1,y), height(x,-y), and height(-x,-y) </b></dd>
-<dd> Stay_prob goes from0 to infinite. Values lower than 0 may cause the program not to work properly. </dd>
+##Stay_prob 
+Stay_prob is the probability that height(x) will be the same as the next height.
+<b> Stay_prob does modify height(x,y), height(x-1,y), height(x,-y), and height(-x,-y) </b>
+Stay_prob goes from0 to infinite. Values lower than 0 may cause the program not to work properly.
 
 
-<dt> Up_prob </dt>
-<dd> Up_prob is the probability that height(x) will be lower than the next height. </dd>
-<dd> Up_prob goes from 0 to infinite. Values lower than 0 may cause the program not to work properly. </dd>
+##Up_prob 
+Up_prob is the probability that height(x) will be lower than the next height. 
+Up_prob goes from 0 to infinite. Values lower than 0 may cause the program not to work properly. 
 
 
-<dt> Resolution_x </dt>
-<dd> Resolution_x is the number of points(x) the lattice has to modify the terrain. </dd>
-<dd> Rasolution_x goes from 1 to 64. </dd>
+##Resolution_x 
+Resolution_x is the number of points(x) the lattice has to modify the terrain.
+Rasolution_x goes from 1 to 64.
 
 
-<dt> Resolution_y </dt>
-<dd> Resolution_y is the number of points(y) the lattice has to modify the terrain. </dd>
-<dd> Rasolution_y goes from 1 to 64. </dd>
+##Resolution_y 
+Resolution_y is the number of points(y) the lattice has to modify the terrain.
+Rasolution_y goes from 1 to 64.
+
+
+
 
 <font size="3"> reset_lattice(obLattice,Lattice): </font>
 
-<dt> oLattice </dt>
-<dd> This argument should not be modified, since it is a <b>List</b> of the lattices' object data. </dd>
-<dd> Don't modify this unless you know what you are doing. </dd>
+##oLattice
+This argument should not be modified, since it is a <b>List</b> of the lattices' object data.
+Don't modify this unless you know what you are doing.
 
 
-<dt> Lattice </dt>
-<dd> Again, this argument should not be modified, as it is a <b>List</b> of the lattices' lattice data. </dd>
-<dd> Don't modify this unless you know what you are doing. </dd>
+##Lattice 
+Again, this argument should not be modified, as it is a <b>List</b> of the lattices' lattice data.
+Don't modify this unless you know what you are doing.
+
+
 
 
 <font size="3"> create_map() </font>
