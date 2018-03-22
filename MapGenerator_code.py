@@ -4,6 +4,17 @@ import math
 import time
 import mathutils
 
+def remove_everything():
+    for a in bpy.data.objects:
+        bpy.data.objects.remove(a,True)
+    for a in bpy.data.lattices:
+        bpy.data.lattices.remove(a)
+    for a in bpy.data.meshes:
+        bpy.data.meshes.remove(a)
+
+#remove_everything()
+
+"""
 try:
     Object_lattice = [bpy.data.objects['Lattice']]
     Lattice = [bpy.data.lattices['Lattice']]
@@ -27,13 +38,15 @@ except:
     scn.objects.link(Object_lattice[0])
     scn.objects.link(Object_mesh)
     #print(str(data_lattice))
-    
-bpy.context.scene.frame_set(1)    
+"""
+      
+Object_lattice = []
+Lattice = []
 
 #print(str(bpy.data.objects['Lattice']))
 #print(str(bpy.data.objects['Lattice'].location))
-bpy.data.objects['Lattice'].location = (0,0,0)
-Object_lattice[0].location = (0,0,0)
+#bpy.data.objects['Lattice'].location = (0,0,0)
+#Object_lattice[0].location = (0,0,0)
 
 print("")
 
@@ -51,57 +64,93 @@ def deform_lattice(map_width, map_height, min_height, max_height, add_height, va
     print("-----------------------------")
     print("")
     
-    Lattice_Vert_matrix = [[]]
-    Lattice[0].points_u = resolution_x
-    Lattice[0].points_v = resolution_y
-    Lattice[0].points_w = 0
     
     points_x = resolution_x
     points_y = resolution_y
-
-    for lat in range(1,(map_width*map_height)):
+    counter = 0
+    lati = -1
+    while counter < map_width*map_height:
+        lati += 1
+        lat = float(lati)/1000
+        while lat > 1:
+            lat = lat / 10
+        lat = str(lat)
+        error = 0
+        
         try:
-            lati = lat
-            lat = float(lat)/1000
-            while lat > 1:
-                lat = lat / 10
-            lat = str(lat)
-            exec("Lattice.append(bpy.data.lattices['Lattice"+str(lat[1:])+"'])")
-            exec("oLattice.append(bpy.data.objects['Lattice"+str(lat[1:])+"'])")
-            exec("bpy.data.lattices['Lattice"+str(lat[1:])+"'].points_u = points_x")
-            exec("bpy.data.lattices['Lattice"+str(lat[1:])+"'].points_v = points_y")
-            #print("Lattice moved to (" + str((-(lati%map_width)*oLattice[len(oLattice)-1].scale[0])) + "," + str(((int(lati/map_width))*oLattice[len(oLattice)-1].scale[1])) + ", 0)")
-            oLattice[len(oLattice)-1].location = (((lati%map_width)*oLattice[len(oLattice)-1].scale[0]),((int(lati/map_width))*oLattice[len(oLattice)-1].scale[1]),0)
-            Lattice_Vert_matrix.append([])
+            exec("does_exist = bpy.data.lattices['Lattice"+str(lat[1:])+"']")
         except:
+            error += 1
+        try:
+            exec("does_exist = bpy.data.objects['Lattice"+str(lat[1:])+"']")
+        except:
+            error += 1
+        try:
+            exec("does_exist = bpy.data.meshes['Plane"+ str(lat[1:]) + "']")
+        except:
+            error += 1
+            #exec("bpy.data.lattices['Lattice"+str(lat[1:])+"'].points_u = points_x")
+            #exec("bpy.data.lattices['Lattice"+str(lat[1:])+"'].points_v = points_y")
+            #print("Lattice moved to (" + str((-(lati%map_width)*oLattice[len(oLattice)-1].scale[0])) + "," + str(((int(lati/map_width))*oLattice[len(oLattice)-1].scale[1])) + ", 0)")
+            #oLattice[len(oLattice)-1].location = (((lati%map_width)*oLattice[len(oLattice)-1].scale[0]),((int(lati/map_width))*oLattice[len(oLattice)-1].scale[1]),0)
+            #Lattice_Vert_matrix.append([])
+        print("lati: " + str(lati))
             #print("Lattice"+str(lat[1:])+" doesn't exist")
-            data_lattice = bpy.data.lattices['Lattice'].copy()
-            obj_lattice = eval("bpy.data.objects.new('Lattice"+str(lat[1:])+"', data_lattice)")
-            obj =  bpy.data.objects['Map'].copy()
-            Mesh = bpy.data.objects['Map'].copy()
-            bpy.context.scene.objects.active = None
-            bpy.context.scene.objects.active = obj
-            remove_modifier = obj.modifiers.get("Lattice")
-            if remove_modifier != None:
-                obj.modifiers.remove(remove_modifier)
-            new_modifier = obj.modifiers.new("Lattice", 'LATTICE')
-            new_modifier.object = obj_lattice
-            while True:
+        if error == 3:
+            try:
+                data_lattice = eval("bpy.data.lattices.new('Lattice" + str(lat[1:]) + "')")
+                Mesh = eval("bpy.data.meshes.new('Plane"+ str(lat[1:]) + "')")
+                obj = eval("bpy.data.objects.new('Plane"+ str(lat[1:]) + "', Mesh)")
+                obj_lattice = eval("bpy.data.objects.new('Lattice"+str(lat[1:])+"', data_lattice)")
+                
+                Mesh.from_pydata([(1,1,0),(0,1,0),(-1,1,0),(1,0,0),(0,0,0),(-1,0,0),(1,-1,0),(0,-1,0),(-1,-1,0)], [], [(0,1,4,3),(1,2,5,4),(4,5,8,7),(3,4,7,6)])
+                    #new_modifier = Object_mesh.modifiers.new("Subdivision", 'SUBSURF')
+                    #new_modifier.levels = 6
+                    #new_modifier.subdivision_type = "SIMPLE"
+                    #new_modifier = Object_mesh.modifiers.new("Lattice", 'LATTICE')
+                    #new_modifier.object = Object_lattice[0]
+                    #Object_mesh.parent = Object_lattice[0]
+                counter += 1
+                
+                    #Mesh = bpy.data.objects['Map'].copy()
+                bpy.context.scene.objects.active = None
+                bpy.context.scene.objects.active = obj
+                remove_modifier = obj.modifiers.get("Lattice")
+                if remove_modifier != None:
+                    obj.modifiers.remove(remove_modifier)
+                new_modifier = obj.modifiers.new("Lattice", 'LATTICE')
+                new_modifier.object = obj_lattice
+                while True:
+                    try:
+                        obj.modifier_move_up("Lattice")
+                    except:
+                        break
+                #print("lattices:" + str(data_lattice))    
+                obj_lattice.scale = (72,72,72)
+                obj.scale = (0.5,0.5,0.5)
+                obj.parent = obj_lattice
+                scn = bpy.context.scene
+                scn.objects.link(obj_lattice)
+                scn.objects.link(obj)
+                oLattice.append(obj_lattice)
+                Lattice.append(data_lattice)    
+                oLattice[len(oLattice)-1].location = (((lati%map_width)*oLattice[len(oLattice)-1].scale[0]),((int(lati/map_width))*oLattice[len(oLattice)-1].scale[1]),0)
+            except:
                 try:
-                    obj.modifier_move_up("Lattice")
+                    bpy.data.meshes.remove(Mesh)
+                    bpy.data.objects.remove(obj,True)
+                    bpy.data.objects.remove(obj_lattice,True)
                 except:
-                    break
-            #print("lattices:" + str(data_lattice))
-            oLattice.append(obj_lattice)
-            Lattice.append(data_lattice)        
-            obj_lattice.scale = (72,72,72)
-            obj.scale = (0.5,0.5,0.5)
-            obj.parent = obj_lattice
-            oLattice[len(oLattice)-1].location = (((lati%map_width)*oLattice[len(oLattice)-1].scale[0]),((int(lati/map_width))*oLattice[len(oLattice)-1].scale[1]),0)
-            scn = bpy.context.scene
-            scn.objects.link(obj_lattice)
-            scn.objects.link(obj)
-            Lattice_Vert_matrix.append([])
+                    pass
+                pass
+            
+            
+    for each_lat in Lattice:
+        each_lat.points_u = resolution_x
+        each_lat.points_v = resolution_y
+        each_lat.points_w = 0
+        Lattice_Vert_matrix.append([])
+            
 
     bpy.context.scene.objects.active = None
 
