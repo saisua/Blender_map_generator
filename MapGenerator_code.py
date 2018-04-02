@@ -12,34 +12,7 @@ def remove_everything():
     for a in bpy.data.meshes:
         bpy.data.meshes.remove(a)
 
-#remove_everything()
 
-"""
-try:
-    Object_lattice = [bpy.data.objects['Lattice']]
-    Lattice = [bpy.data.lattices['Lattice']]
-except:
-    data_lattice = bpy.data.lattices.new('Lattice')
-    bpy.data.objects.new('Lattice', data_lattice)
-    Object_lattice = [bpy.data.objects['Lattice']]
-    Lattice = [bpy.data.lattices['Lattice']]
-    Mesh = bpy.data.meshes.new('Map')
-    Object_mesh = bpy.data.objects.new('Map', Mesh)
-    Mesh.from_pydata([(1,1,0),(0,1,0),(-1,1,0),(1,0,0),(0,0,0),(-1,0,0),(1,-1,0),(0,-1,0),(-1,-1,0)], [], [(0,1,4,3),(1,2,5,4),(4,5,8,7),(3,4,7,6)])
-    new_modifier = Object_mesh.modifiers.new("Subdivision", 'SUBSURF')
-    new_modifier.levels = 6
-    new_modifier.subdivision_type = "SIMPLE"
-    new_modifier = Object_mesh.modifiers.new("Lattice", 'LATTICE')
-    new_modifier.object = Object_lattice[0]
-    Object_mesh.scale = (0.5,0.5,0.5)
-    Object_lattice[0].scale = (72,72,72)
-    Object_mesh.parent = Object_lattice[0]
-    scn = bpy.context.scene
-    scn.objects.link(Object_lattice[0])
-    scn.objects.link(Object_mesh)
-    #print(str(data_lattice))
-"""
-      
 Object_lattice = []
 Lattice = []
 
@@ -47,6 +20,8 @@ Lattice = []
 #print(str(bpy.data.objects['Lattice'].location))
 #bpy.data.objects['Lattice'].location = (0,0,0)
 #Object_lattice[0].location = (0,0,0)
+
+remove_everything()
 
 print("")
 
@@ -57,18 +32,23 @@ print("")
 
 
 
-def deform_lattice(map_width, map_height, min_height, max_height, add_height, variation_height, oLattice, Lattice, min_land, max_land, down_prob, stay_prob, up_prob, resolution_x, resolution_y):
+def deform_lattice(map_width = 2, map_height = 2, lattice_width = 72, lattice_height = 72, min_height = -.035, max_height = .035, add_height = .005, variation_height = 5, oLattice = [], Lattice = [], min_land = 35, max_land = 75, down_prob = 1, stay_prob = 1, up_prob = 1, resolution_x = 32, resolution_y = 32, sea = False):
     print("-----------------------------")
     print("vvvvvvvvvvvvvvvvvvvvvvvvvvvvv")
     print("           STARTING          ")
     print("-----------------------------")
     print("")
-    
-    
     points_x = resolution_x
     points_y = resolution_y
-    counter = 0
+    if len(Lattice) <= len(oLattice):    
+        counter = len(Lattice)
+        oLattice = oLattice[:len(Lattice)]
+    else:
+        counter = len(oLattice)
+        Lattice = Lattice[:len(oLattice)]
     lati = -1
+    Lattice_Vert_matrix = [] 
+    print("counter: " + str(counter))
     while counter < map_width*map_height:
         lati += 1
         lat = float(lati)/1000
@@ -76,17 +56,20 @@ def deform_lattice(map_width, map_height, min_height, max_height, add_height, va
             lat = lat / 10
         lat = str(lat)
         error = 0
+    
+        Lattice_name = "Lattice" + str(lat[1:])
+        Plane_name = "Plane" + str(lat[1:])
         
         try:
-            exec("does_exist = bpy.data.lattices['Lattice"+str(lat[1:])+"']")
+            does_exist = bpy.data.lattices[Lattice_name]
         except:
             error += 1
         try:
-            exec("does_exist = bpy.data.objects['Lattice"+str(lat[1:])+"']")
+            does_exist = bpy.data.objects[Lattice_name]
         except:
             error += 1
         try:
-            exec("does_exist = bpy.data.meshes['Plane"+ str(lat[1:]) + "']")
+            does_exist = bpy.data.meshes[Plane_name]
         except:
             error += 1
             #exec("bpy.data.lattices['Lattice"+str(lat[1:])+"'].points_u = points_x")
@@ -98,44 +81,63 @@ def deform_lattice(map_width, map_height, min_height, max_height, add_height, va
             #print("Lattice"+str(lat[1:])+" doesn't exist")
         if error == 3:
             try:
-                data_lattice = eval("bpy.data.lattices.new('Lattice" + str(lat[1:]) + "')")
-                Mesh = eval("bpy.data.meshes.new('Plane"+ str(lat[1:]) + "')")
-                obj = eval("bpy.data.objects.new('Plane"+ str(lat[1:]) + "', Mesh)")
-                obj_lattice = eval("bpy.data.objects.new('Lattice"+str(lat[1:])+"', data_lattice)")
+                
+                #data_lattice = bpy.data.lattices.new('Lattice')
+                #obj_lattice = bpy.data.objects.new('Lattice', data_lattice)
+                #Object_lattice = [bpy.data.objects['Lattice']]
+                #Lattice = [bpy.data.lattices['Lattice']]
+                
+                data_lattice = bpy.data.lattices.new(Lattice_name)
+                obj_lattice = bpy.data.objects.new(Lattice_name, data_lattice)   
+                Mesh = bpy.data.meshes.new(Plane_name)
+                obj = bpy.data.objects.new(Plane_name, Mesh)
                 
                 Mesh.from_pydata([(1,1,0),(0,1,0),(-1,1,0),(1,0,0),(0,0,0),(-1,0,0),(1,-1,0),(0,-1,0),(-1,-1,0)], [], [(0,1,4,3),(1,2,5,4),(4,5,8,7),(3,4,7,6)])
-                    #new_modifier = Object_mesh.modifiers.new("Subdivision", 'SUBSURF')
-                    #new_modifier.levels = 6
-                    #new_modifier.subdivision_type = "SIMPLE"
-                    #new_modifier = Object_mesh.modifiers.new("Lattice", 'LATTICE')
-                    #new_modifier.object = Object_lattice[0]
-                    #Object_mesh.parent = Object_lattice[0]
                 counter += 1
-                
-                    #Mesh = bpy.data.objects['Map'].copy()
                 bpy.context.scene.objects.active = None
                 bpy.context.scene.objects.active = obj
-                remove_modifier = obj.modifiers.get("Lattice")
-                if remove_modifier != None:
-                    obj.modifiers.remove(remove_modifier)
+                try:
+                    remove_modifier = obj.modifiers.get("Lattice")
+                    if remove_modifier != None:
+                        obj.modifiers.remove(remove_modifier)
+                except:
+                    pass
+                new_modifier = obj.modifiers.new("Subdivision", 'SUBSURF')
+                new_modifier.levels = 6
+                new_modifier.subdivision_type = "SIMPLE"
                 new_modifier = obj.modifiers.new("Lattice", 'LATTICE')
                 new_modifier.object = obj_lattice
+                """
                 while True:
                     try:
                         obj.modifier_move_up("Lattice")
                     except:
                         break
-                #print("lattices:" + str(data_lattice))    
-                obj_lattice.scale = (72,72,72)
+                """        
+
+                #print("lattices:" + str(data_lattice))  
+                obj_lattice.scale = (map_width,map_heigth,(map_width + map_height)/2)
                 obj.scale = (0.5,0.5,0.5)
+                #print("resolution_x: " + str(resolution_x))
+                #print("tipo res: " + str(type(resolution_x)))
+                #print("data_lattice " + str(data_lattice))
+                #print("tipo data: " + str(type(data_lattice.points_u)))
+                
                 obj.parent = obj_lattice
                 scn = bpy.context.scene
                 scn.objects.link(obj_lattice)
                 scn.objects.link(obj)
                 oLattice.append(obj_lattice)
-                Lattice.append(data_lattice)    
+                Lattice.append(data_lattice) 
+                bpy.context.scene.frame_set(1)    
+                data_lattice.points_u = resolution_x
+                data_lattice.points_v = resolution_y
+                data_lattice.points_w = 1
+                Lattice_Vert_matrix.append([])
+                
                 oLattice[len(oLattice)-1].location = (((lati%map_width)*oLattice[len(oLattice)-1].scale[0]),((int(lati/map_width))*oLattice[len(oLattice)-1].scale[1]),0)
             except:
+                print("Error")
                 try:
                     bpy.data.meshes.remove(Mesh)
                     bpy.data.objects.remove(obj,True)
@@ -144,20 +146,26 @@ def deform_lattice(map_width, map_height, min_height, max_height, add_height, va
                     pass
                 pass
             
-            
-    for each_lat in Lattice:
-        each_lat.points_u = resolution_x
-        each_lat.points_v = resolution_y
-        each_lat.points_w = 0
-        Lattice_Vert_matrix.append([])
-            
-
+    if sea:
+        lati += 1
+        lat = float(lati)/1000
+        while lat > 1:
+            lat = lat / 10
+        lat = str(lat)
+        Plane_name = "Plane" + str(lat[1:])
+        Mesh = bpy.data.meshes.new(Plane_name)
+        obj = bpy.data.objects.new(Plane_name, Mesh)       
+        Mesh.from_pydata([(1,1,0),(0,1,0),(-1,1,0),(1,0,0),(0,0,0),(-1,0,0),(1,-1,0),(0,-1,0),(-1,-1,0)], [], [(0,1,4,3),(1,2,5,4),(4,5,8,7),(3,4,7,6)])
+        obj.scale = ((lattice_width/2)*map_width,(lattice_height/2)*map_height,1)
+        obj.location = ((lattice_width/2)*(map_width-1) + (lattice_width/4),(lattice_height/2)*(map_height-1)+(lattice_height/4),-0.0001)
+        scn.objects.link(obj)
+                    
     bpy.context.scene.objects.active = None
 
     print("")
     #print("Lattice = " + str(math.sqrt(len(Lattice_Vert_matrix))))
-    Lattice_Vert_x = Lattice[0].points_u
-    Lattice_Vert_y = Lattice[0].points_v
+    Lattice_Vert_x = resolution_x
+    Lattice_Vert_y = resolution_y
     #print("max vert = (" + str(Lattice_Vert_x) + "," + str(Lattice_Vert_y) +")")
     contador = -1
     contador_x = -1
@@ -208,6 +216,8 @@ def deform_lattice(map_width, map_height, min_height, max_height, add_height, va
                 else:
                     if contador_y - (int(latt_y/math.sqrt(map_size))*Lattice_Vert_y) > 0:
                         print(str(contador_y - (int(latt_y/math.sqrt(map_size))*Lattice_Vert_y)-1))
+                        print("Latt_V_mat:" + str(Lattice_Vert_matrix))
+                        #print(Lattice_Vert_matrix[latt][contador_y - (int(latt_y/math.sqrt(map_size))*Lattice_Vert_y)-1][contador])
                         if (height > Lattice_Vert_matrix[latt][contador_y - (int(latt_y/math.sqrt(map_size))*Lattice_Vert_y)-1][contador] + add_height*variation_height or height < Lattice_Vert_matrix[latt][contador_y - (int(latt_y/math.sqrt(map_size))*Lattice_Vert_y)-1][contador] - add_height*variation_height):
                             print("too much height [" + str(height) + "], y")
                             height = Lattice_Vert_matrix[latt][contador_y - (int(latt_y/math.sqrt(map_size))*Lattice_Vert_y)-1][contador]
@@ -305,7 +315,7 @@ def deform_lattice(map_width, map_height, min_height, max_height, add_height, va
                             point_x = oLattice[each_lattice].data.points[(height_row)*(len(Lattice_Vert_matrix[each_lattice][0]))+each_height].co_deform[0]
                             point_y = oLattice[each_lattice].data.points[(height_row)*(len(Lattice_Vert_matrix[each_lattice][0]))+each_height].co_deform[1]
                             oLattice[each_lattice].data.points[(height_row)*(len(Lattice_Vert_matrix[each_lattice][0]))+each_height].co_deform = (point_x,point_y,Lattice_Vert_matrix[each_lattice][height_row][each_height])
-                #print(oLattice[each_lattice])             
+                #print(oLattice[each_lattice])         
             
 def reset_lattice(obLattice,Lattice):
     for each_lattice in Lattice:    
@@ -316,9 +326,9 @@ def reset_lattice(obLattice,Lattice):
  
 def create_map():
     global Object_lattice,Lattice   
-    deform_lattice(5,3,-.035,.035,.005,5,Object_lattice,Lattice,35,75,1,2,1,32,32)
-    #width, height, min_height, max_height, add_height, variation_height, object_lattice, lattice, min_land, max_land, down_prob, stay_prob, up_prob, resolution_x, resolution_y
-    #default: (1,1,-.035,.035,.005,2,Object_lattice,Lattice,35,75,1,3,1,32,32)
+    deform_lattice(2,2,72,72,-.035,.035,.005,5,Object_lattice,Lattice,0,100,1,2,1,32,32,True)
+    #map_width, map_height, lattice_width, lattice_height, min_height, max_height, add_height, variation_height, object_lattice, lattice, min_land, max_land, down_prob, stay_prob, up_prob, resolution_x, resolution_y, sea
+    #default: (2,2,72,72,-.035,.035,.005,2,Object_lattice,Lattice,35,75,1,3,1,32,32,False)
     
 
 create_map()
