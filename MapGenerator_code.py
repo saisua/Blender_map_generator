@@ -11,6 +11,8 @@ def remove_everything():
         bpy.data.lattices.remove(a)
     for a in bpy.data.meshes:
         bpy.data.meshes.remove(a)
+    for a in bpy.data.materials:
+        bpy.data.materials.remove(a)
 
 
 Object_lattice = []
@@ -21,7 +23,7 @@ Lattice = []
 #bpy.data.objects['Lattice'].location = (0,0,0)
 #Object_lattice[0].location = (0,0,0)
 
-remove_everything()
+#remove_everything()
 
 print("")
 
@@ -31,8 +33,13 @@ print("")
 #-Crear lattices
 
 
+#https://blender-manual-i18n.readthedocs.io/ja/latest/modifiers/generate/subsurf.html#subsurf-performance
+#((2^n+2)^2)/4
+#n Subdivision level
 
-def deform_lattice(map_width = 2, map_height = 2, lattice_width = 72, lattice_height = 72, min_height = -.035, max_height = .035, add_height = .005, variation_height = 5, oLattice = [], Lattice = [], min_land = 35, max_land = 75, down_prob = 1, stay_prob = 1, up_prob = 1, resolution_x = 32, resolution_y = 32, sea = False):
+
+
+def deform_lattice(map_width = 2, map_height = 2, lattice_width = 72, lattice_height = 72, min_height = -.035, max_height = .035, add_height = .005, variation_height = 5, oLattice = [], Lattice = [], min_land = 35, max_land = 75, down_prob = 1, stay_prob = 1, up_prob = 1, resolution_x = 32, resolution_y = 32, subdivision_level = 5, sea = False, color = False):
     print("-----------------------------")
     print("vvvvvvvvvvvvvvvvvvvvvvvvvvvvv")
     print("           STARTING          ")
@@ -40,6 +47,7 @@ def deform_lattice(map_width = 2, map_height = 2, lattice_width = 72, lattice_he
     print("")
     points_x = resolution_x
     points_y = resolution_y
+    Objects = []
     if len(Lattice) <= len(oLattice):    
         counter = len(Lattice)
         oLattice = oLattice[:len(Lattice)]
@@ -49,7 +57,7 @@ def deform_lattice(map_width = 2, map_height = 2, lattice_width = 72, lattice_he
     lati = -1
     Lattice_Vert_matrix = [] 
     print("counter: " + str(counter))
-    while counter < map_width*map_height:
+    while counter < map_width*map_height+1:
         lati += 1
         lat = float(lati)/1000
         while lat > 1:
@@ -79,7 +87,7 @@ def deform_lattice(map_width = 2, map_height = 2, lattice_width = 72, lattice_he
             #Lattice_Vert_matrix.append([])
         print("lati: " + str(lati))
             #print("Lattice"+str(lat[1:])+" doesn't exist")
-        if error == 3:
+        if error == 3 and counter < map_width*map_height:
             try:
                 
                 #data_lattice = bpy.data.lattices.new('Lattice')
@@ -103,32 +111,24 @@ def deform_lattice(map_width = 2, map_height = 2, lattice_width = 72, lattice_he
                 except:
                     pass
                 new_modifier = obj.modifiers.new("Subdivision", 'SUBSURF')
-                new_modifier.levels = 6
+                new_modifier.levels = 0
                 new_modifier.subdivision_type = "SIMPLE"
                 new_modifier = obj.modifiers.new("Lattice", 'LATTICE')
                 new_modifier.object = obj_lattice
-                """
-                while True:
-                    try:
-                        obj.modifier_move_up("Lattice")
-                    except:
-                        break
-                """        
-
                 #print("lattices:" + str(data_lattice))  
-                obj_lattice.scale = (map_width,map_heigth,(map_width + map_height)/2)
+                obj_lattice.scale = (lattice_width,lattice_height,(lattice_width + lattice_height)/2)
                 obj.scale = (0.5,0.5,0.5)
                 #print("resolution_x: " + str(resolution_x))
                 #print("tipo res: " + str(type(resolution_x)))
                 #print("data_lattice " + str(data_lattice))
                 #print("tipo data: " + str(type(data_lattice.points_u)))
-                
                 obj.parent = obj_lattice
                 scn = bpy.context.scene
                 scn.objects.link(obj_lattice)
                 scn.objects.link(obj)
                 oLattice.append(obj_lattice)
                 Lattice.append(data_lattice) 
+                Objects.append(obj)
                 bpy.context.scene.frame_set(1)    
                 data_lattice.points_u = resolution_x
                 data_lattice.points_v = resolution_y
@@ -146,20 +146,55 @@ def deform_lattice(map_width = 2, map_height = 2, lattice_width = 72, lattice_he
                     pass
                 pass
             
-    if sea:
-        lati += 1
-        lat = float(lati)/1000
-        while lat > 1:
-            lat = lat / 10
-        lat = str(lat)
-        Plane_name = "Plane" + str(lat[1:])
-        Mesh = bpy.data.meshes.new(Plane_name)
-        obj = bpy.data.objects.new(Plane_name, Mesh)       
-        Mesh.from_pydata([(1,1,0),(0,1,0),(-1,1,0),(1,0,0),(0,0,0),(-1,0,0),(1,-1,0),(0,-1,0),(-1,-1,0)], [], [(0,1,4,3),(1,2,5,4),(4,5,8,7),(3,4,7,6)])
-        obj.scale = ((lattice_width/2)*map_width,(lattice_height/2)*map_height,1)
-        obj.location = ((lattice_width/2)*(map_width-1) + (lattice_width/4),(lattice_height/2)*(map_height-1)+(lattice_height/4),-0.0001)
-        scn.objects.link(obj)
-                    
+        elif sea and counter == map_width*map_height:
+            Plane_name = "Plane" + str(lat[1:])
+            scn = bpy.context.scene
+            Mesh = bpy.data.meshes.new(Plane_name)
+            if color:
+                lati = -1
+                for num in range(2):    
+                    while True:
+                        try:
+                            lati += 1
+                            lat = float(lati2)/1000
+                            while lat > 1:
+                                lat = lat / 10
+                            lat = str(lat)
+                            material = bpy.data.materials['Material'+lat[1:]]
+                        except:
+                            material = bpy.data.materials.new('Material'+lat[1:])
+                            break
+                    if num > 0:
+                        for obj in Objects:
+                            material.diffuse_color = (0.061354,0.023289,0.0)
+                            material.diffuse_shader = 'LAMBERT' 
+                            material.diffuse_intensity = 1.0 
+                            material.specular_color = (1,0.38923,0.003719)
+                            material.specular_shader = 'BLINN'
+                            material.specular_intensity = 0.5
+                            obj_data = obj.data
+                            obj_data.materials.append(material) 
+                    else:    
+                        obj = bpy.data.objects.new(Plane_name, Mesh)  
+                        material.diffuse_color = (0.046482,0.489297,0.702919)
+                        material.diffuse_shader = 'LAMBERT' 
+                        material.diffuse_intensity = 1.0 
+                        material.specular_color = (1,1,1)
+                        material.specular_shader = 'BLINN'
+                        material.specular_intensity = 0.5
+                        material.specular_ior = 1.330
+                        material.raytrace_mirror.use = True
+                        material.raytrace_mirror.reflect_factor = 0.5
+                        obj_data = obj.data
+                        obj_data.materials.append(material)
+            obj = bpy.data.objects.new(Plane_name, Mesh)
+            Mesh.from_pydata([(1,1,0),(0,1,0),(-1,1,0),(1,0,0),(0,0,0),(-1,0,0),(1,-1,0),(0,-1,0),(-1,-1,0)], [], [(0,1,4,3),(1,2,5,4),(4,5,8,7),(3,4,7,6)])
+            scn.objects.link(obj)
+            obj.scale = ((lattice_width/2)*map_width,(lattice_height/2)*map_height,1)
+            obj.location = ((lattice_width/2)*(map_width-1),(lattice_height/2)*(map_height-1),-0.0001)
+            # + (lattice_width/4)                 +(lattice_height/4)
+            counter += 1
+    
     bpy.context.scene.objects.active = None
 
     print("")
@@ -289,7 +324,7 @@ def deform_lattice(map_width = 2, map_height = 2, lattice_width = 72, lattice_he
                     #time.sleep(1)
                 latt = int(latt_y)
             #print("")
-    #print(str(Lattice_Vert_matrix))
+    print(str(Lattice_Vert_matrix))
     if True:
         print("starting land stat.")
         positive = 0
@@ -315,7 +350,11 @@ def deform_lattice(map_width = 2, map_height = 2, lattice_width = 72, lattice_he
                             point_x = oLattice[each_lattice].data.points[(height_row)*(len(Lattice_Vert_matrix[each_lattice][0]))+each_height].co_deform[0]
                             point_y = oLattice[each_lattice].data.points[(height_row)*(len(Lattice_Vert_matrix[each_lattice][0]))+each_height].co_deform[1]
                             oLattice[each_lattice].data.points[(height_row)*(len(Lattice_Vert_matrix[each_lattice][0]))+each_height].co_deform = (point_x,point_y,Lattice_Vert_matrix[each_lattice][height_row][each_height])
-                #print(oLattice[each_lattice])         
+                #print(oLattice[each_lattice])     
+        if subdivision_level > 0:
+            for obj in Objects:
+                obj.modifiers['Subdivision'].levels = subdivision_level
+                    
             
 def reset_lattice(obLattice,Lattice):
     for each_lattice in Lattice:    
@@ -326,9 +365,9 @@ def reset_lattice(obLattice,Lattice):
  
 def create_map():
     global Object_lattice,Lattice   
-    deform_lattice(2,2,72,72,-.035,.035,.005,5,Object_lattice,Lattice,0,100,1,2,1,32,32,True)
-    #map_width, map_height, lattice_width, lattice_height, min_height, max_height, add_height, variation_height, object_lattice, lattice, min_land, max_land, down_prob, stay_prob, up_prob, resolution_x, resolution_y, sea
-    #default: (2,2,72,72,-.035,.035,.005,2,Object_lattice,Lattice,35,75,1,3,1,32,32,False)
+    deform_lattice(2,2,72,72,-.035,.035,.005,5,Object_lattice,Lattice,0,100,1,2,1,32,32,6,True,True)
+    #map_width, map_height, lattice_width, lattice_height, min_height, max_height, add_height, variation_height, object_lattice, lattice, min_land, max_land, down_prob, stay_prob, up_prob, resolution_x, resolution_y, subdivision_level, sea, color
+    #default: (2,2,72,72,-.035,.035,.005,2,Object_lattice,Lattice,35,75,1,3,1,32,32,5,False,False)
     
 
 create_map()
