@@ -7,6 +7,11 @@ import collections
 import bmesh
 
 def remove_everything():
+    try:
+        bpy.ops.object.mode_set(mode="OBJECT", toggle=False)
+    except:
+        pass
+    bpy.ops.object.select_all(action="DESELECT")
     for a in bpy.data.objects:
         bpy.data.objects.remove(a,True)
     for a in bpy.data.lattices:
@@ -48,7 +53,7 @@ print("")
 
 
 
-def deform_lattice(map_width = 2, map_height = 2, lattice_width = 72, lattice_height = 72, min_height = -.035, max_height = .035, add_height = .005, variation_height = 5, oLattice = [], Lattice = [], min_land = 35, max_land = 75, down_prob = 1, stay_prob = 1, up_prob = 1, resolution_x = 32, resolution_y = 32, subdivision_level = 5, sea = False, color = False, create_rivers = False, use_river_formula = False, concavity = 0.48535, perc_rivers = 25):
+def deform_lattice(map_width = 2, map_height = 2, lattice_width = 72, lattice_height = 72, min_height = -.035, max_height = .035, add_height = .005, variation_height = 5, oLattice = [], Lattice = [], min_land = 35, max_land = 75, down_prob = 1, stay_prob = 1, up_prob = 1, resolution_x = 32, resolution_y = 32, subdivision_level = 5, sea = False, color = False, create_rivers = False, use_river_formula = False, concavity = 0.48535):
     print("-----------------------------")
     print("vvvvvvvvvvvvvvvvvvvvvvvvvvvvv")
     print("           STARTING          ")
@@ -57,7 +62,6 @@ def deform_lattice(map_width = 2, map_height = 2, lattice_width = 72, lattice_he
     points_x = resolution_x
     points_y = resolution_y
     Objects = []
-    Height_dict = []
     Meshes = []
     if len(Lattice) <= len(oLattice):    
         counter = len(Lattice)
@@ -146,7 +150,6 @@ def deform_lattice(map_width = 2, map_height = 2, lattice_width = 72, lattice_he
                 data_lattice.points_v = resolution_y
                 data_lattice.points_w = 1
                 Lattice_Vert_matrix.append([]) 
-                Height_dict.append({})
             
                 oLattice[len(oLattice)-1].location = (((lati%map_width)*oLattice[len(oLattice)-1].scale[0]),((int(lati/map_width))*oLattice[len(oLattice)-1].scale[1]),0)
             except:
@@ -309,8 +312,6 @@ def deform_lattice(map_width = 2, map_height = 2, lattice_width = 72, lattice_he
             height = max_height
         print("new point position = ("+str(height)+")")
         Lattice_Vert_x_matrix.append(height)
-        if contador_y > 0:
-            Height_dict[latt][str(((contador_y-1)*Lattice_Vert_x)+contador)] = height
         if contador >= Lattice_Vert_x - 1:
             if latt < len(Lattice_Vert_matrix):
                 #print(str(latt) + "/" + str(map_size-1))            
@@ -370,38 +371,106 @@ def deform_lattice(map_width = 2, map_height = 2, lattice_width = 72, lattice_he
             for obj in Objects:
                 obj.modifiers['Subdivision'].levels = subdivision_level
     if create_rivers:
-        create_rivers(Objects, Meshes, concavity, use_river_formula, Height_dict, perc_rivers)
+        shape_rivers(Objects, Meshes, concavity, use_river_formula)
     return [Object_lattice,Lattice]
                     
             
-def create_rivers(Objects, Meshes, Concavity=0.48535, Use_formula=False, Height_dict=[], perc_rivers=25):
-    if len(Height_dict) > 0:
-        create_dict = False
-    else:
-        create_dict = True
+def shape_rivers(Objects, Meshes, Concavity=0.48535, Use_formula=False, erosion_per_unit = 0.001):
+    Height_dict = []
+    Maps = []
+    erosion = .005
     for num in range(len(Objects)):
-        bpy.ops.object.mode_set(mode="OBJECT", toggle=False)
+        print("num: " + str(num))
+        mesh_vertices = Meshes[num].vertices
+        mesh_vert_side = math.sqrt(len(mesh_vertices))
+        try:
+            bpy.ops.object.mode_set(mode="OBJECT", toggle=False)
+        except:
+            pass
         bpy.ops.object.select_all(action="DESELECT")
         Objects[num].select = True
+        bpy.context.scene.objects.active = Objects[num]
         try:
             bpy.ops.object.modifier_apply(apply_as="DATA",modifier="Subdivision")
             bpy.ops.object.modifier_apply(apply_as="DATA",modifier="Lattice")
+        except:
+            pass
+        try:
             Meshes[num] = bpy.data.meshes[Meshes[num].name]
         except:
-            continue
+            pass
         bpy.ops.object.mode_set(mode="EDIT", toggle=False)
-        if create_dict:
-            Height_dict.append({})
-            mesh_vert = bmesh.from_edit_mesh(Meshes[num])
-            print(bmesh.types.BMVertSeq.ensure_lookup_table(mesh_vert.verts))
-            for vert in range(len(Meshes[num].vertices)):
-                Height_dict[num][str(vert)] = (mesh_vert.verts[vert].co.to_tuple()[2])
-        highest_dict = collections.OrderedDict(reversed(sorted(Height_dict[num].items(), key=lambda t: t[1])))
-        for mountain_top in range(int((perc_rivers*len(Meshes[num].vertices)/100))):
-            print(list(highest_dict.values())[mountain_top])
-             
+        Height_dict.append({})
+        Maps.append({})
+        mesh_vert = bmesh.from_edit_mesh(Meshes[num])
+        if hasattr(mesh_vert.verts, "ensure_lookup_table"):
+            mesh_vert.verts.ensure_lookup_table()
+        for vert in range(len(mesh_vertices)):
+            vert_height = (mesh_vert.verts[vert].co.to_tuple()[2])
+            if vert_height >= 0 and vert < len(mesh_vertices) - mesh_vert_side and vert > mesh_vert_side and vert % mesh_vert_side != 0 and (vert - 1) % mesh_vert_side != 0:
+                Height_dict[num][str(vert)] = vert_height
+        Height_dict[num] = collections.OrderedDict(reversed(sorted(Height_dict[num].items(), key=lambda t: t[1])))
+        erosion_list = {}
+        river_order = {}
+        for anali_vert_for in list(Height_dict[num].keys()):
+            print("vert_for: " + str(anali_vert_for))
+            print("vert total: " + str(len(Height_dict[num])+(mesh_vert_side*4)))
+            print("mesh_vert_side: " + str(mesh_vert_side)) 
+            anali_vert = Height_dict[num][str(int(anali_vert_for))]
+            surrounding_vert = {}
+            try:
+                surrounding_vert[str(int(anali_vert_for)-1)] = list(Meshes[num].vertices[int(anali_vert_for)-1].co)[2]
+            except:
+                pass
+            try:
+                surrounding_vert[str(int(anali_vert_for)+1)] = list(Meshes[num].vertices[int(anali_vert_for)+1].co)[2]
+            except:
+                pass
+            try:
+                surrounding_vert[str(int(int(anali_vert_for)-round(mesh_vert_side)-1))] = list(Meshes[num].vertices[int(int(anali_vert_for)-1-round(mesh_vert_side))].co)[2]
+            except:
+                pass
+            try:
+                surrounding_vert[str(int(int(anali_vert_for)-round(mesh_vert_side)))] = list(Meshes[num].vertices[int(int(anali_vert_for)-round(mesh_vert_side))].co)[2]
+            except:
+                pass
+            try:
+                surrounding_vert[str(int(int(anali_vert_for)-round(mesh_vert_side)+1))] = list(Meshes[num].vertices[int(int(anali_vert_for)-round(mesh_vert_side)+1)].co)[2]
+            except:
+                pass
+            try:
+                surrounding_vert[str(int(int(anali_vert_for)+round(mesh_vert_side)+1))] = list(Meshes[num].vertices[int(int(anali_vert_for)+round(mesh_vert_side)-1)].co)[2]
+            except:
+                pass
+            try:
+                surrounding_vert[str(int(int(anali_vert_for)+round(mesh_vert_side)))] = list(Meshes[num].vertices[int(int(anali_vert_for)+round(mesh_vert_side))].co)[2]
+            except:
+                pass
+            try:
+                surrounding_vert[str(int(int(anali_vert_for)+round(mesh_vert_side)-1))] = list(Meshes[num].vertices[int(int(anali_vert_for)+round(mesh_vert_side)-1)].co)[2]
+            except:
+                pass
+            if len(surrounding_vert) <= 0:
+                continue
+            surrounding_vert = collections.OrderedDict(sorted(surrounding_vert.items(), key=lambda t: t[1]))
+            print(list(surrounding_vert.keys()))
             
-create_rivers([bpy.data.objects['Plane.0']],[bpy.data.meshes['Plane.0']])
+            try:
+                erosion_list[anali_vert_for] += erosion_per_unit
+            except:
+                erosion_list[anali_vert_for] = erosion_per_unit
+            for vertex in list(surrounding_vert.keys()):
+                try:
+                    erosion_list[vertex] += erosion_per_unit
+                except:
+                    erosion_list[vertex] = erosion_per_unit
+            if anali_vert > list(surrounding_vert.values())[0]:
+                erosion_list[list(surrounding_vert.keys())[0]] += erosion_list[anali_vert_for]
+                river_order[anali_vert_for] = list(surrounding_vert.keys())[0]
+                
+        print(river_order)
+            
+shape_rivers([bpy.data.objects['Plane.0']],[bpy.data.meshes['Plane.0']])
             
 def reset_lattice(obLattice,Lattice):
     for each_lattice in Lattice:    
@@ -412,8 +481,8 @@ def reset_lattice(obLattice,Lattice):
  
 def create_map():
     global Object_lattice,Lattice   
-    deform_lattice(1,1,72,72,-.035,.07,.01,2,Object_lattice,Lattice,35,75,1,3,1,64,64,6,True,True,False,False,0.48535,25)
-    #map_width, map_height, lattice_width, lattice_height, min_height, max_height, add_height, variation_height, object_lattice, lattice, min_land, max_land, down_prob, stay_prob, up_prob, resolution_x, resolution_y, subdivision_level, sea, color, create_rivers, use_river_formula, concavity, perc_rivers
+    deform_lattice(1,1,72,72,-.035,.07,.01,2,Object_lattice,Lattice,35,75,1,3,1,64,64,6,True,True,True,False,0.48535)
+    #map_width, map_height, lattice_width, lattice_height, min_height, max_height, add_height, variation_height, object_lattice, lattice, min_land, max_land, down_prob, stay_prob, up_prob, resolution_x, resolution_y, subdivision_level, sea, color, create_rivers, use_river_formula, concavity
     #default: (2,2,72,72,-.035,.035,.005,2,Object_lattice,Lattice,35,75,1,3,1,32,32,5,False,False,False,False)
     
 
